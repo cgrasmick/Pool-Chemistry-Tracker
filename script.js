@@ -40,6 +40,8 @@ document.getElementById("entryForm").addEventListener("submit", function(e) {
 
 function renderTable() {
   const tbody = document.querySelector("#entriesTable tbody");
+  if (!tbody) return;
+
   tbody.innerHTML = "";
 
   entries.forEach((e,i)=>{
@@ -61,6 +63,7 @@ function renderTable() {
 
 function renderChart() {
   const ctx = document.getElementById("chemChart");
+  if (!ctx) return;
 
   const labels = [...entries].reverse().map(e=>e.date);
 
@@ -79,7 +82,11 @@ function renderChart() {
     options:{
       responsive:true,
       interaction:{ mode:"index", intersect:false },
-      scales:{ y:{ beginAtZero:false }}
+      scales:{
+        y:{
+          beginAtZero:false
+        }
+      }
     }
   });
 
@@ -89,21 +96,22 @@ function renderChart() {
 
 function renderControls() {
   const div = document.getElementById("chartControls");
+  if (!div) return;
+
   div.innerHTML = "";
 
   metrics.forEach((m,i)=>{
-    const wrapper = document.createElement("label");
-    wrapper.className = "chart-item";
+    const label = document.createElement("label");
 
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
     checkbox.checked = true;
     checkbox.dataset.index = i;
 
-    wrapper.appendChild(checkbox);
-    wrapper.appendChild(document.createTextNode(m.toUpperCase()));
+    label.appendChild(checkbox);
+    label.appendChild(document.createTextNode(m.toUpperCase()));
 
-    div.appendChild(wrapper);
+    div.appendChild(label);
   });
 
   div.addEventListener("change", function(e){
@@ -117,24 +125,28 @@ function renderControls() {
 }
 
 function updateYAxis() {
-  const visible = [];
+  if (!chart) return;
+
+  const visibleValues = [];
 
   chart.data.datasets.forEach(ds=>{
     if (!ds.hidden) {
-      ds.data.forEach(v=>{
-        if (v !== null) visible.push(v);
+      ds.data.forEach(val=>{
+        if (val !== null && val !== undefined) {
+          visibleValues.push(val);
+        }
       });
     }
   });
 
-  if (visible.length === 0) return;
+  if (visibleValues.length === 0) return;
 
-  const min = Math.min(...visible);
-  const max = Math.max(...visible);
-  const pad = (max - min) * 0.1 || 1;
+  const min = Math.min(...visibleValues);
+  const max = Math.max(...visibleValues);
+  const padding = (max - min) * 0.1 || 1;
 
-  chart.options.scales.y.min = min - pad;
-  chart.options.scales.y.max = max + pad;
+  chart.options.scales.y.min = min - padding;
+  chart.options.scales.y.max = max + padding;
 
   chart.update();
 }
