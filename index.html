@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
-    <title>Pool Chemistry Tracker</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<meta charset="UTF-8">
+<title>Pool Chemistry Tracker</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
@@ -13,37 +13,38 @@
 
 <form id="poolForm">
 
-    <label>Date</label>
-    <input type="date" id="date" required>
+<label>Date</label>
+<input type="date" id="date" required>
 
-    <textarea id="notes" placeholder="Notes"></textarea>
+<textarea id="notes" placeholder="Notes"></textarea>
 
-    <input type="number" step="0.01" id="ph" placeholder="pH">
-    <input type="number" step="0.01" id="fc" placeholder="FC">
-    <input type="number" step="0.01" id="tc" placeholder="TC">
-    <input type="number" step="0.01" id="cc" placeholder="CC">
-    <input type="number" step="0.01" id="ta" placeholder="TA">
-    <input type="number" step="0.01" id="ch" placeholder="CH">
-    <input type="number" step="0.01" id="cya" placeholder="CYA">
-    <input type="number" step="0.01" id="temp" placeholder="Temp (F)">
+<input type="number" step="0.01" id="ph" placeholder="pH">
+<input type="number" step="0.01" id="fc" placeholder="FC">
+<input type="number" step="0.01" id="tc" placeholder="TC">
+<input type="number" step="0.01" id="cc" placeholder="CC">
+<input type="number" step="0.01" id="ta" placeholder="TA">
+<input type="number" step="0.01" id="ch" placeholder="CH">
+<input type="number" step="0.01" id="cya" placeholder="CYA">
+<input type="number" step="0.01" id="temp" placeholder="Temp (F)">
 
-    <h3>Chemicals Added</h3>
-    <div id="chemicalContainer"></div>
-    <button type="button" id="addChemicalBtn">Add Chemical</button>
+<h3>Chemicals Added</h3>
+<div id="chemicalContainer"></div>
+<button type="button" id="addChemicalBtn">Add Chemical</button>
 
-    <button type="submit">Save Entry</button>
+<button type="submit">Save Entry</button>
+
 </form>
 
 <h3>Chart Controls</h3>
 <div id="toggles">
-    <label><input type="checkbox" value="all" checked> All</label>
-    <label><input type="checkbox" value="ph" checked> pH</label>
-    <label><input type="checkbox" value="fc" checked> FC</label>
-    <label><input type="checkbox" value="tc" checked> TC</label>
-    <label><input type="checkbox" value="cc" checked> CC</label>
-    <label><input type="checkbox" value="ta" checked> TA</label>
-    <label><input type="checkbox" value="ch" checked> CH</label>
-    <label><input type="checkbox" value="cya" checked> CYA</label>
+<label><input type="checkbox" id="toggleAll" checked> All</label>
+<label><input type="checkbox" value="ph" checked> pH</label>
+<label><input type="checkbox" value="fc" checked> FC</label>
+<label><input type="checkbox" value="tc" checked> TC</label>
+<label><input type="checkbox" value="cc" checked> CC</label>
+<label><input type="checkbox" value="ta" checked> TA</label>
+<label><input type="checkbox" value="ch" checked> CH</label>
+<label><input type="checkbox" value="cya" checked> CYA</label>
 </div>
 
 <canvas id="chart"></canvas>
