@@ -1,5 +1,5 @@
 body {
-  font-family: Arial, sans-serif;
+  font-family: Arial;
   margin: 10px;
   max-width: 500px;
 }
@@ -7,7 +7,6 @@ body {
 form label {
   display: block;
   margin-top: 8px;
-  font-size: 14px;
 }
 
 input, textarea, select, button {
@@ -15,7 +14,6 @@ input, textarea, select, button {
   padding: 6px;
   margin-top: 3px;
   box-sizing: border-box;
-  font-size: 14px;
 }
 
 textarea {
@@ -39,21 +37,16 @@ button {
 
 #chartControls {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-  gap: 6px 10px;
-  margin-bottom: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+  gap: 6px;
+  margin-bottom: 10px;
 }
 
-.chart-control-item {
+#chartControls label {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   font-size: 12px;
-}
-
-.chart-control-item input {
-  width: auto;
-  margin: 0;
 }
 
 canvas {
@@ -74,7 +67,7 @@ th, td {
 }
 
 td:last-child {
-  min-width: 130px;
+  min-width: 120px;
 }
 
 .actions button {

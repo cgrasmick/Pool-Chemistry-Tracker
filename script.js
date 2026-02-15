@@ -72,6 +72,7 @@ function renderTable() {
 
 function renderChart() {
   const ctx = document.getElementById("chemChart");
+
   const labels = [...entries].reverse().map(e=>e.date);
 
   const datasets = metrics.map(m=>({
@@ -89,16 +90,18 @@ function renderChart() {
     options:{
       responsive:true,
       interaction:{ mode:"index", intersect:false },
-      scales:{ y:{ beginAtZero:false }},
+      scales:{
+        y:{ beginAtZero:false }
+      },
       plugins:{
         tooltip:{
           callbacks:{
             label: function(context){
               const index = context.dataIndex;
               const entry = [...entries].reverse()[index];
-              return metrics
-                .filter(k=>entry[k]!==null)
-                .map(k=>`${k.toUpperCase()}: ${entry[k]}`)
+              return Object.entries(entry)
+                .filter(([k,v])=>metrics.includes(k) && v!==null)
+                .map(([k,v])=>`${k.toUpperCase()}: ${v}`)
                 .join(" | ");
             }
           }
@@ -108,54 +111,28 @@ function renderChart() {
   });
 
   renderControls();
-  updateYAxis();
 }
 
 function renderControls() {
   const div = document.getElementById("chartControls");
-  div.innerHTML = "";
+  div.innerHTML="";
 
-  // All toggle
-  const allWrapper = document.createElement("label");
-  allWrapper.className = "chart-control-item";
+  const allLabel = document.createElement("label");
+  allLabel.innerHTML = `<input type="checkbox" id="allToggle" checked> All`;
+  div.appendChild(allLabel);
 
-  const allCheckbox = document.createElement("input");
-  allCheckbox.type = "checkbox";
-  allCheckbox.checked = true;
-  allCheckbox.id = "allToggle";
-
-  const allText = document.createTextNode(" All");
-
-  allWrapper.appendChild(allCheckbox);
-  allWrapper.appendChild(allText);
-  div.appendChild(allWrapper);
-
-  // Metric toggles
   metrics.forEach((m,i)=>{
-    const wrapper = document.createElement("label");
-    wrapper.className = "chart-control-item";
-
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.checked = true;
-    checkbox.dataset.index = i;
-
-    const text = document.createTextNode(" " + m.toUpperCase());
-
-    wrapper.appendChild(checkbox);
-    wrapper.appendChild(text);
-    div.appendChild(wrapper);
+    const label = document.createElement("label");
+    label.innerHTML = `<input type="checkbox" data-index="${i}" checked> ${m.toUpperCase()}`;
+    div.appendChild(label);
   });
 
   div.addEventListener("change", function(e){
-
-    if (e.target.id === "allToggle") {
+    if (e.target.id==="allToggle") {
       const checked = e.target.checked;
-
       div.querySelectorAll("input[type=checkbox]").forEach(cb=>{
         cb.checked = checked;
       });
-
       chart.data.datasets.forEach(ds=> ds.hidden = !checked);
       chart.update();
       updateYAxis();
@@ -167,15 +144,9 @@ function renderControls() {
       chart.data.datasets[i].hidden = !e.target.checked;
       chart.update();
       updateYAxis();
-
-      const allChecked = [...div.querySelectorAll("input[data-index]")]
-        .every(cb=>cb.checked);
-
-      document.getElementById("allToggle").checked = allChecked;
     }
   });
 }
-
 
 function updateYAxis() {
   const visibleData = [];
@@ -188,34 +159,26 @@ function updateYAxis() {
     }
   });
 
-  if (visibleData.length === 0) return;
+  if (visibleData.length===0) return;
 
   const min = Math.min(...visibleData);
   const max = Math.max(...visibleData);
 
-  const padding = (max - min) * 0.1 || 1;
-
-  chart.options.scales.y.min = min - padding;
-  chart.options.scales.y.max = max + padding;
-
+  chart.options.scales.y.min = min - (max-min)*0.1;
+  chart.options.scales.y.max = max + (max-min)*0.1;
   chart.update();
 }
 
 function deleteEntry(i){
-  const confirmed = window.confirm("Delete this entry?");
-  if (!confirmed) return;
-
   entries.splice(i,1);
   saveData();
   renderTable();
   renderChart();
 }
 
-
 function editEntry(i){
   const e = entries[i];
   editingIndex = i;
-
   Object.keys(e).forEach(k=>{
     if (document.getElementById(k)) {
       document.getElementById(k).value = e[k] ?? "";
@@ -225,7 +188,6 @@ function editEntry(i){
 
 function copyEntry(i){
   const e = entries[i];
-
   const text = `
 Date: ${e.date}
 FC: ${e.fc}
@@ -238,15 +200,13 @@ CYA: ${e.cya}
 Temp: ${e.temp}
 Notes: ${e.notes}
 Chemicals: ${formatChemicals(e.chemicals)}
-  `.trim();
-
-  navigator.clipboard.writeText(text);
+  `;
+  navigator.clipboard.writeText(text.trim());
 }
 
 function addChemicalType(){
   const name = document.getElementById("newChemical").value.trim();
   if (!name) return;
-
   chemicalTypes.push(name);
   document.getElementById("newChemical").value="";
   saveData();
@@ -255,13 +215,11 @@ function addChemicalType(){
 function addChemicalRow(){
   const div = document.createElement("div");
   div.className="chem-row";
-
   div.innerHTML=`
     <select>${chemicalTypes.map(c=>`<option>${c}</option>`).join("")}</select>
     <input type="number" step="0.01" placeholder="Amount">
     <button type="button" onclick="this.parentElement.remove()">X</button>
   `;
-
   document.getElementById("chemicals").appendChild(div);
 }
 
@@ -279,7 +237,6 @@ function formatChemicals(list){
 
 function exportCSV(){
   let csv="Date,"+metrics.join(",")+",Notes,Chemicals\n";
-
   entries.forEach(e=>{
     csv+=`${e.date},${metrics.map(m=>e[m]??"").join(",")},${e.notes || ""},"${formatChemicals(e.chemicals)}"\n`;
   });
