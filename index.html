@@ -1,10 +1,11 @@
+
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pool Chemistry Tracker</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -12,60 +13,85 @@
 <h2>Pool Chemistry Tracker</h2>
 
 <form id="entryForm">
-
   <label>Date</label>
   <input type="date" id="date" required />
+
+  <label>FC</label>
+  <input type="number" step="0.01" id="fc" />
+
+  <label>TC</label>
+  <input type="number" step="0.01" id="tc" />
+
+  <label>CC</label>
+  <input type="number" step="0.01" id="cc" />
+
+  <label>pH</label>
+  <input type="number" step="0.01" id="ph" />
+
+  <label>TA</label>
+  <input type="number" step="0.01" id="ta" />
+
+  <label>CH</label>
+  <input type="number" step="0.01" id="ch" />
+
+  <label>CYA</label>
+  <input type="number" step="0.01" id="cya" />
+
+  <label>Salt</label>
+  <input type="number" step="0.01" id="salt" />
+
+  <label>Temperature</label>
+  <input type="number" step="0.01" id="temp" />
 
   <label>Notes</label>
   <textarea id="notes"></textarea>
 
-  <div class="grid">
-    <input step="0.01" type="number" id="ph" placeholder="pH">
-    <input step="0.01" type="number" id="fc" placeholder="FC">
-    <input step="0.01" type="number" id="tc" placeholder="TC">
-    <input step="0.01" type="number" id="cc" placeholder="CC">
-    <input step="0.01" type="number" id="ta" placeholder="TA">
-    <input step="0.01" type="number" id="ch" placeholder="CH">
-    <input step="0.01" type="number" id="cya" placeholder="CYA">
-    <input step="0.01" type="number" id="temp" placeholder="Temp (F)">
+  <h4>Chemical Additions</h4>
+
+  <div id="chemicals"></div>
+
+  <div class="chem-row">
+    <input type="text" id="newChemical" placeholder="Add new chemical name" />
+    <button type="button" onclick="addChemicalType()">Add Type</button>
   </div>
 
-  <h4>Chemicals Added</h4>
-  <div id="chemicalsContainer"></div>
-  <button type="button" id="addChemicalBtn">Add Chemical</button>
-
+  <button type="button" onclick="addChemicalRow()">Add Chemical Entry</button>
   <button type="submit">Save Entry</button>
 </form>
 
-<h3>Chart Controls</h3>
-<div id="chartControls" class="controls"></div>
+<hr>
 
-<canvas id="chart"></canvas>
+<h3>Chart Controls</h3>
+<div id="chartControls"></div>
+
+<canvas id="chemChart"></canvas>
+
+<hr>
 
 <h3>Entries</h3>
-<div class="table-container">
+
 <table id="entriesTable">
   <thead>
     <tr>
       <th>Date</th>
-      <th>pH</th>
       <th>FC</th>
       <th>TC</th>
       <th>CC</th>
+      <th>pH</th>
       <th>TA</th>
       <th>CH</th>
       <th>CYA</th>
+      <th>Salt</th>
       <th>Temp</th>
       <th>Notes</th>
-      <th>Chemicals</th>
+      <th>Chemical Additions</th>
       <th>Actions</th>
     </tr>
   </thead>
   <tbody></tbody>
 </table>
-</div>
 
-<button id="exportBtn">Export CSV</button>
+<button onclick="exportCSV()">Export to CSV</button>
 
 <script src="script.js"></script>
 </body>

@@ -1,42 +1,57 @@
+
 body {
-  font-family: Arial, sans-serif;
-  max-width: 700px;
-  margin: auto;
-  padding: 15px;
+  font-family: Arial;
+  margin: 10px;
+  max-width: 500px;
+}
+
+form label {
+  display: block;
+  margin-top: 8px;
 }
 
 input, textarea, select, button {
   width: 100%;
-  margin: 5px 0;
-  padding: 8px;
-  font-size: 15px;
+  padding: 6px;
+  margin-top: 3px;
+  box-sizing: border-box;
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: 1fr;
+textarea {
+  resize: vertical;
 }
 
-.controls {
+button {
+  margin-top: 8px;
+}
+
+#chemicals .chem-row {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  font-size: 13px;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+#chemicals select,
+#chemicals input {
+  flex: 1;
+}
+
+#chartControls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+  gap: 6px;
   margin-bottom: 10px;
 }
 
-.controls label {
+#chartControls label {
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
+  font-size: 12px;
 }
 
 canvas {
-  margin-top: 10px;
-}
-
-.table-container {
-  overflow-x: auto;
+  max-height: 300px;
 }
 
 table {
@@ -49,26 +64,16 @@ th, td {
   border: 1px solid #ccc;
   padding: 4px;
   text-align: center;
-  vertical-align: middle;
+  vertical-align: top;
 }
 
-td.notes-cell {
-  max-width: 120px;
-  overflow-wrap: break-word;
+td:last-child {
+  min-width: 120px;
 }
 
-td.chem-cell {
-  max-width: 150px;
-  overflow-wrap: break-word;
-}
-
-td.actions {
-  white-space: nowrap;
-}
-
-td.actions button {
+.actions button {
   width: auto;
+  padding: 4px 6px;
+  margin: 2px;
   font-size: 11px;
-  padding: 3px 6px;
-  margin: 0 2px;
 }
