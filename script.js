@@ -3,7 +3,7 @@ let chemicalTypes = JSON.parse(localStorage.getItem("chemicalTypes")) || [];
 let editingIndex = null;
 let chart;
 
-const metrics = ["fc","tc","cc","ph","ta","ch","cya","salt","temp"];
+const metrics = ["fc","tc","cc","ph","ta","ch","cya","temp"];
 
 function saveData() {
   localStorage.setItem("entries", JSON.stringify(entries));
@@ -116,8 +116,8 @@ function renderControls() {
   const div = document.getElementById("chartControls");
   div.innerHTML = "";
 
-  // ALL toggle
-  const allWrapper = document.createElement("div");
+  // All toggle
+  const allWrapper = document.createElement("label");
   allWrapper.className = "chart-control-item";
 
   const allCheckbox = document.createElement("input");
@@ -125,16 +125,15 @@ function renderControls() {
   allCheckbox.checked = true;
   allCheckbox.id = "allToggle";
 
-  const allLabel = document.createElement("span");
-  allLabel.textContent = "All";
+  const allText = document.createTextNode(" All");
 
   allWrapper.appendChild(allCheckbox);
-  allWrapper.appendChild(allLabel);
+  allWrapper.appendChild(allText);
   div.appendChild(allWrapper);
 
   // Metric toggles
   metrics.forEach((m,i)=>{
-    const wrapper = document.createElement("div");
+    const wrapper = document.createElement("label");
     wrapper.className = "chart-control-item";
 
     const checkbox = document.createElement("input");
@@ -142,11 +141,10 @@ function renderControls() {
     checkbox.checked = true;
     checkbox.dataset.index = i;
 
-    const label = document.createElement("span");
-    label.textContent = m.toUpperCase();
+    const text = document.createTextNode(" " + m.toUpperCase());
 
     wrapper.appendChild(checkbox);
-    wrapper.appendChild(label);
+    wrapper.appendChild(text);
     div.appendChild(wrapper);
   });
 
@@ -179,6 +177,7 @@ function renderControls() {
   });
 }
 
+
 function updateYAxis() {
   const visibleData = [];
 
@@ -204,13 +203,15 @@ function updateYAxis() {
 }
 
 function deleteEntry(i){
-  if (!confirm("Are you sure you want to delete this entry?")) return;
+  const confirmed = window.confirm("Delete this entry?");
+  if (!confirmed) return;
 
   entries.splice(i,1);
   saveData();
   renderTable();
   renderChart();
 }
+
 
 function editEntry(i){
   const e = entries[i];
