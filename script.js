@@ -1,8 +1,9 @@
+const fields = ["ph","fc","tc","cc","ta","ch","cya","temp"];
+
 let entries = JSON.parse(localStorage.getItem("poolEntries")) || [];
 let chemicalsList = JSON.parse(localStorage.getItem("chemList")) || [];
 
-const fields = ["ph","fc","tc","cc","ta","ch","cya","temp"];
-let chart;
+let chart = null;
 
 function saveStorage() {
   localStorage.setItem("poolEntries", JSON.stringify(entries));
@@ -14,65 +15,88 @@ function getValue(id) {
   return v === "" ? null : parseFloat(v);
 }
 
+/* ---------- CHEMICALS ---------- */
+
 function addChemicalRow(name="", amount="", unit="oz") {
   const container = document.getElementById("chemicalsContainer");
 
   const row = document.createElement("div");
+  row.style.display = "flex";
+  row.style.gap = "5px";
 
   const chemSelect = document.createElement("select");
-  chemSelect.innerHTML =
-    `<option value="">Select Chemical</option>` +
-    chemicalsList.map(c => `<option ${c===name?"selected":""}>${c}</option>`).join("") +
-    `<option value="__new__">+ Add New</option>`;
 
-  chemSelect.onchange = function() {
+  const defaultOpt = document.createElement("option");
+  defaultOpt.value = "";
+  defaultOpt.textContent = "Chemical";
+  chemSelect.appendChild(defaultOpt);
+
+  chemicalsList.forEach(c=>{
+    const opt = document.createElement("option");
+    opt.value = c;
+    opt.textContent = c;
+    if (c === name) opt.selected = true;
+    chemSelect.appendChild(opt);
+  });
+
+  const newOpt = document.createElement("option");
+  newOpt.value = "__new__";
+  newOpt.textContent = "+ Add New";
+  chemSelect.appendChild(newOpt);
+
+  chemSelect.addEventListener("change", function(){
     if (this.value === "__new__") {
-      const newChem = prompt("Enter new chemical name:");
-      if (newChem && !chemicalsList.includes(newChem)) {
+      const newChem = prompt("New chemical name:");
+      if (newChem) {
         chemicalsList.push(newChem);
         saveStorage();
         renderChemicalDropdowns();
       }
     }
-  };
+  });
 
-  const amt = document.createElement("input");
-  amt.type = "number";
-  amt.step = "0.01";
-  amt.placeholder = "Amount";
-  amt.value = amount;
+  const amtInput = document.createElement("input");
+  amtInput.type = "number";
+  amtInput.step = "0.01";
+  amtInput.placeholder = "Amt";
+  amtInput.value = amount;
 
   const unitSelect = document.createElement("select");
   ["oz","lb","gal","ml","g"].forEach(u=>{
     const opt = document.createElement("option");
     opt.value = u;
-    opt.text = u;
+    opt.textContent = u;
     if (u === unit) opt.selected = true;
     unitSelect.appendChild(opt);
   });
 
   row.appendChild(chemSelect);
-  row.appendChild(amt);
+  row.appendChild(amtInput);
   row.appendChild(unitSelect);
 
   container.appendChild(row);
 }
 
 function renderChemicalDropdowns() {
-  document.getElementById("chemicalsContainer").innerHTML = "";
+  const container = document.getElementById("chemicalsContainer");
+  container.innerHTML = "";
   addChemicalRow();
 }
 
-document.getElementById("entryForm").onsubmit = function(e){
+/* ---------- SAVE ENTRY ---------- */
+
+document.getElementById("entryForm").addEventListener("submit", function(e){
   e.preventDefault();
 
   const entry = {
-    date: date.value,
-    notes: notes.value,
+    date: document.getElementById("date").value,
+    notes: document.getElementById("notes").value,
     chemicals: []
   };
 
-  fields.forEach(f => entry[f] = getValue(f));
+  fields.forEach(f=>{
+    entry[f] = getValue(f);
+  });
 
   document.querySelectorAll("#chemicalsContainer div").forEach(row=>{
     const selects = row.querySelectorAll("select");
@@ -92,60 +116,36 @@ document.getElementById("entryForm").onsubmit = function(e){
 
   saveStorage();
   render();
+
   this.reset();
   renderChemicalDropdowns();
-};
+});
 
-function renderTable(){
+/* ---------- TABLE ---------- */
+
+function renderTable() {
   const tbody = document.querySelector("#entriesTable tbody");
   tbody.innerHTML = "";
 
-  entries.forEach((e,i)=>{
+  entries.forEach(e=>{
     const tr = document.createElement("tr");
 
     tr.innerHTML = `
       <td>${e.date}</td>
       ${fields.map(f=>`<td>${e[f] ?? ""}</td>`).join("")}
-      <td class="actions">
-        <button onclick="deleteEntry(${i})">Del</button>
-        <button onclick="copyEntry(${i})">Copy</button>
-      </td>
+      <td></td>
     `;
 
     tbody.appendChild(tr);
   });
 }
 
-function deleteEntry(i){
-  entries.splice(i,1);
-  saveStorage();
-  render();
-}
+/* ---------- CHART ---------- */
 
-function copyEntry(i){
-  const e = entries[i];
-  let text = `Pool Test - ${e.date}\n\n`;
-  fields.forEach(f=>{
-    if(e[f] !== null) text += `${f.toUpperCase()}: ${e[f]}\n`;
-  });
-
-  if(e.chemicals.length){
-    text += "\nChemicals Added:\n";
-    e.chemicals.forEach(c=>{
-      text += `${c.name} - ${c.amount} ${c.unit}\n`;
-    });
-  }
-
-  text += `\nNotes:\n${e.notes}`;
-
-  navigator.clipboard.writeText(text);
-  alert("Copied");
-}
-
-function renderChart(){
+function renderChart() {
   const ctx = document.getElementById("chart");
 
-  if(chart) chart.destroy();
+  if (chart) chart.destroy();
 
   const labels = entries.slice().reverse().map(e=>e.date);
 
@@ -158,65 +158,21 @@ function renderChart(){
   chart = new Chart(ctx,{
     type:"line",
     data:{ labels, datasets },
-    options:{
-      responsive:true,
-      interaction:{ mode:"nearest", intersect:true },
-      onClick:(evt, elements)=>{
-        if(elements.length){
-          const index = elements[0].index;
-          const entry = entries.slice().reverse()[index];
-          alert(JSON.stringify(entry,null,2));
-        }
-      }
-    }
-  });
-
-  renderControls();
-}
-
-function renderControls(){
-  const div = document.getElementById("chartControls");
-  div.innerHTML = "";
-
-  const all = document.createElement("input");
-  all.type = "checkbox";
-  all.checked = true;
-
-  all.onchange = ()=>{
-    chart.data.datasets.forEach(ds=> ds.hidden = !all.checked);
-    chart.update();
-    document.querySelectorAll(".datasetBox")
-      .forEach(cb=> cb.checked = all.checked);
-  };
-
-  div.append("All ");
-  div.appendChild(all);
-
-  chart.data.datasets.forEach((ds,i)=>{
-    const cb = document.createElement("input");
-    cb.type = "checkbox";
-    cb.checked = true;
-    cb.className = "datasetBox";
-
-    cb.onchange = ()=>{
-      ds.hidden = !cb.checked;
-      chart.update();
-    };
-
-    div.append(` ${ds.label} `);
-    div.appendChild(cb);
+    options:{ responsive:true }
   });
 }
 
-function exportCSV(){
-  let csv = "Date,"+fields.join(",")+"\n";
+/* ---------- EXPORT ---------- */
+
+function exportCSV() {
+  let csv = "Date," + fields.join(",") + "\n";
   entries.forEach(e=>{
     csv += e.date + "," +
-      fields.map(f=> e[f] ?? "").join(",") +
+      fields.map(f=>e[f] ?? "").join(",") +
       "\n";
   });
 
-  const blob = new Blob([csv], {type:"text/csv"});
+  const blob = new Blob([csv],{type:"text/csv"});
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -224,7 +180,9 @@ function exportCSV(){
   a.click();
 }
 
-document.getElementById("exportBtn").onclick = exportCSV;
+document.getElementById("exportBtn").addEventListener("click", exportCSV);
+
+/* ---------- INIT ---------- */
 
 function render(){
   renderTable();
