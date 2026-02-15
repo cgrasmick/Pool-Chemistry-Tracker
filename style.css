@@ -1,8 +1,8 @@
 body {
   font-family: Arial, sans-serif;
-  padding: 15px;
   max-width: 600px;
   margin: auto;
+  padding: 15px;
 }
 
 input, textarea, select, button {
@@ -27,8 +27,8 @@ canvas {
 
 table {
   width: 100%;
-  font-size: 14px;
   border-collapse: collapse;
+  font-size: 13px;
 }
 
 th, td {
@@ -43,7 +43,7 @@ td.actions {
 
 td.actions button {
   width: auto;
-  padding: 4px 6px;
   font-size: 12px;
+  padding: 3px 6px;
   margin: 0 2px;
 }
