@@ -27,7 +27,6 @@ document.getElementById("entryForm").addEventListener("submit", function(e) {
     ta: parseVal("ta"),
     ch: parseVal("ch"),
     cya: parseVal("cya"),
-    salt: parseVal("salt"),
     temp: parseVal("temp"),
     notes: document.getElementById("notes").value,
     chemicals: getChemicalRows()
@@ -236,7 +235,6 @@ pH: ${e.ph}
 TA: ${e.ta}
 CH: ${e.ch}
 CYA: ${e.cya}
-Salt: ${e.salt}
 Temp: ${e.temp}
 Notes: ${e.notes}
 Chemicals: ${formatChemicals(e.chemicals)}
