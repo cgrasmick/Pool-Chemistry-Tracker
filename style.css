@@ -1,49 +1,49 @@
 body {
-    font-family: Arial, sans-serif;
-    margin: 10px;
-}
-
-form {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+  font-family: Arial, sans-serif;
+  padding: 15px;
+  max-width: 600px;
+  margin: auto;
 }
 
 input, textarea, select, button {
-    width: 100%;
-    padding: 8px;
-    font-size: 16px;
+  width: 100%;
+  margin: 5px 0;
+  padding: 8px;
+  font-size: 16px;
 }
 
-textarea {
-    resize: vertical;
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
 }
 
-#toggles {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
+canvas {
+  margin-top: 20px;
 }
 
-.table-wrapper {
-    overflow-x: auto;
+.table-container {
+  overflow-x: auto;
 }
 
 table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
+  width: 100%;
+  font-size: 14px;
+  border-collapse: collapse;
 }
 
 th, td {
-    border: 1px solid #ccc;
-    padding: 5px;
-    white-space: nowrap;
-    text-align: center;
+  border: 1px solid #ccc;
+  padding: 4px;
+  text-align: center;
 }
 
-.actions button {
-    margin: 2px;
-    padding: 4px 6px;
-    font-size: 12px;
+td.actions {
+  white-space: nowrap;
+}
+
+td.actions button {
+  width: auto;
+  padding: 4px 6px;
+  font-size: 12px;
+  margin: 0 2px;
 }

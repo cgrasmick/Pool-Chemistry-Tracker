@@ -1,227 +1,212 @@
-let poolData = JSON.parse(localStorage.getItem("poolData")) || [];
-let editIndex = null;
+let entries = JSON.parse(localStorage.getItem("poolEntries")) || [];
+let chemicalsList = JSON.parse(localStorage.getItem("chemList")) || [];
 
-const form = document.getElementById("poolForm");
-const tableBody = document.querySelector("#dataTable tbody");
-const chemicalContainer = document.getElementById("chemicalContainer");
+const fields = ["ph","fc","tc","cc","ta","ch","cya","temp"];
+let chart;
 
 function saveStorage() {
-    localStorage.setItem("poolData", JSON.stringify(poolData));
+  localStorage.setItem("poolEntries", JSON.stringify(entries));
+  localStorage.setItem("chemList", JSON.stringify(chemicalsList));
+}
+
+function getValue(id) {
+  const val = document.getElementById(id).value;
+  return val === "" ? null : parseFloat(val);
 }
 
 function addChemicalRow(name="", amount="", unit="oz") {
-    const div = document.createElement("div");
-    div.className = "chemRow";
-    div.innerHTML = `
-        <input class="chemName" placeholder="Chemical name" value="${name}">
-        <input type="number" step="0.01" class="chemAmount" placeholder="Amount" value="${amount}">
-        <select class="chemUnit">
-            <option ${unit==="oz"?"selected":""}>oz</option>
-            <option ${unit==="lb"?"selected":""}>lb</option>
-            <option ${unit==="gal"?"selected":""}>gal</option>
-            <option ${unit==="qt"?"selected":""}>qt</option>
-            <option ${unit==="tabs"?"selected":""}>tabs</option>
-        </select>
-    `;
-    chemicalContainer.appendChild(div);
-}
+  const container = document.getElementById("chemicalsContainer");
+  const div = document.createElement("div");
 
-document.getElementById("addChemicalBtn")
-.addEventListener("click", () => addChemicalRow());
+  const select = document.createElement("select");
+  select.innerHTML = `<option value="">Select Chemical</option>` +
+    chemicalsList.map(c => `<option ${c===name?"selected":""}>${c}</option>`).join("") +
+    `<option value="new">+ Add New</option>`;
 
-function getVal(id){
-    const v = document.getElementById(id).value;
-    return v === "" ? null : parseFloat(v).toFixed(2);
-}
-
-form.addEventListener("submit", function(e){
-    e.preventDefault();
-
-    const chemicals=[];
-    document.querySelectorAll(".chemRow").forEach(row=>{
-        const name=row.querySelector(".chemName").value;
-        const amount=row.querySelector(".chemAmount").value;
-        const unit=row.querySelector(".chemUnit").value;
-        if(name && amount){
-            chemicals.push({name,amount:parseFloat(amount).toFixed(2),unit});
-        }
-    });
-
-    const entry={
-        date:document.getElementById("date").value,
-        notes:document.getElementById("notes").value,
-        ph:getVal("ph"),
-        fc:getVal("fc"),
-        tc:getVal("tc"),
-        cc:getVal("cc"),
-        ta:getVal("ta"),
-        ch:getVal("ch"),
-        cya:getVal("cya"),
-        temp:getVal("temp"),
-        chemicals
-    };
-
-    if(editIndex!==null){
-        poolData[editIndex]=entry;
-        editIndex=null;
-    } else {
-        poolData.push(entry);
+  select.onchange = function() {
+    if (this.value === "new") {
+      const newChem = prompt("Enter new chemical name:");
+      if (newChem) {
+        chemicalsList.push(newChem);
+        saveStorage();
+        renderChemicalDropdowns();
+      }
     }
+  };
 
-    saveStorage();
-    form.reset();
-    chemicalContainer.innerHTML="";
-    render();
-});
+  div.innerHTML = `
+    <input type="number" step="0.01" placeholder="Amount" value="${amount}">
+    <select>
+      <option ${unit==="oz"?"selected":""}>oz</option>
+      <option ${unit==="lb"?"selected":""}>lb</option>
+      <option ${unit==="gal"?"selected":""}>gal</option>
+      <option ${unit==="ml"?"selected":""}>ml</option>
+      <option ${unit==="g"?"selected":""}>g</option>
+    </select>
+  `;
+
+  div.prepend(select);
+  container.appendChild(div);
+}
+
+function renderChemicalDropdowns() {
+  document.getElementById("chemicalsContainer").innerHTML="";
+  addChemicalRow();
+}
+
+document.getElementById("entryForm").onsubmit = function(e) {
+  e.preventDefault();
+
+  const entry = {
+    date: date.value,
+    notes: notes.value,
+    chemicals: [],
+  };
+
+  fields.forEach(f => entry[f] = getValue(f));
+
+  document.querySelectorAll("#chemicalsContainer div").forEach(div => {
+    const selects = div.querySelectorAll("select");
+    const inputs = div.querySelectorAll("input");
+
+    if (selects[0].value && inputs[0].value) {
+      entry.chemicals.push({
+        name: selects[0].value,
+        amount: parseFloat(inputs[0].value),
+        unit: selects[1].value
+      });
+    }
+  });
+
+  entries.push(entry);
+  entries.sort((a,b)=> new Date(b.date)-new Date(a.date));
+
+  saveStorage();
+  render();
+  this.reset();
+  renderChemicalDropdowns();
+};
+
+function renderTable() {
+  const tbody = document.querySelector("#entriesTable tbody");
+  tbody.innerHTML="";
+
+  entries.forEach((e,i)=>{
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${e.date}</td>
+      ${fields.map(f=>`<td>${e[f] ?? ""}</td>`).join("")}
+      <td class="actions">
+        <button onclick="deleteEntry(${i})">Del</button>
+        <button onclick="copyEntry(${i})">Copy</button>
+      </td>
+    `;
+    tbody.appendChild(row);
+  });
+}
+
+function deleteEntry(i){
+  entries.splice(i,1);
+  saveStorage();
+  render();
+}
+
+function copyEntry(i){
+  const e = entries[i];
+  let text = `Pool Test ${e.date}\n`;
+  fields.forEach(f=>{
+    if(e[f]!==null) text += `${f.toUpperCase()}: ${e[f]}\n`;
+  });
+  if(e.chemicals.length){
+    text += "\nChemicals Added:\n";
+    e.chemicals.forEach(c=>{
+      text += `${c.name} - ${c.amount} ${c.unit}\n`;
+    });
+  }
+  text += `\nNotes:\n${e.notes}`;
+  navigator.clipboard.writeText(text);
+  alert("Copied to clipboard");
+}
+
+function renderChart(){
+  const ctx = document.getElementById("chart");
+  if(chart) chart.destroy();
+
+  const datasets = fields.map(f=>({
+    label:f.toUpperCase(),
+    data: entries.slice().reverse().map(e=>e[f]),
+    hidden:false
+  }));
+
+  chart = new Chart(ctx,{
+    type:"line",
+    data:{
+      labels: entries.slice().reverse().map(e=>e.date),
+      datasets
+    },
+    options:{
+      spanGaps:false,
+      onClick:(evt,elements)=>{
+        if(elements.length){
+          const index = elements[0].index;
+          const entry = entries.slice().reverse()[index];
+          alert(JSON.stringify(entry,null,2));
+        }
+      }
+    }
+  });
+
+  renderControls();
+}
+
+function renderControls(){
+  const div = document.getElementById("chartControls");
+  div.innerHTML="";
+
+  const all = document.createElement("input");
+  all.type="checkbox";
+  all.checked=true;
+  all.onchange=()=>{
+    chart.data.datasets.forEach(ds=>ds.hidden=!all.checked);
+    chart.update();
+    document.querySelectorAll(".datasetBox").forEach(cb=>cb.checked=all.checked);
+  };
+  div.append("All ");
+  div.appendChild(all);
+
+  chart.data.datasets.forEach((ds,i)=>{
+    const cb=document.createElement("input");
+    cb.type="checkbox";
+    cb.checked=true;
+    cb.className="datasetBox";
+    cb.onchange=()=>{
+      ds.hidden=!cb.checked;
+      chart.update();
+    };
+    div.append(` ${ds.label} `);
+    div.appendChild(cb);
+  });
+}
+
+function exportCSV(){
+  let csv="Date,"+fields.join(",")+"\n";
+  entries.forEach(e=>{
+    csv+=e.date+","+fields.map(f=>e[f]??"").join(",")+"\n";
+  });
+  const blob=new Blob([csv],{type:"text/csv"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;
+  a.download="pool_data.csv";
+  a.click();
+}
+
+document.getElementById("exportBtn").onclick=exportCSV;
 
 function render(){
-    const sorted=[...poolData].sort((a,b)=>new Date(b.date)-new Date(a.date));
-    tableBody.innerHTML="";
-
-    sorted.forEach(entry=>{
-        const realIndex=poolData.indexOf(entry);
-
-        const row=document.createElement("tr");
-        row.innerHTML=`
-            <td>${entry.date}</td>
-            <td>${entry.ph ?? ""}</td>
-            <td>${entry.fc ?? ""}</td>
-            <td>${entry.tc ?? ""}</td>
-            <td>${entry.cc ?? ""}</td>
-            <td>${entry.ta ?? ""}</td>
-            <td>${entry.ch ?? ""}</td>
-            <td>${entry.cya ?? ""}</td>
-            <td>${entry.temp ?? ""}</td>
-            <td>${entry.chemicals.map(c=>`${c.name} ${c.amount} ${c.unit}`).join(" | ")}</td>
-            <td>${entry.notes}</td>
-            <td class="actions">
-                <button onclick="editEntry(${realIndex})">Edit</button>
-                <button onclick="deleteEntry(${realIndex})">Del</button>
-                <button onclick="copyEntry(${realIndex})">Copy</button>
-            </td>
-        `;
-        tableBody.appendChild(row);
-    });
-
-    updateChart([...sorted].reverse());
+  renderTable();
+  renderChart();
 }
 
-function editEntry(index){
-    const e=poolData[index];
-    editIndex=index;
-
-    for(let key in e){
-        if(document.getElementById(key)){
-            document.getElementById(key).value=e[key] ?? "";
-        }
-    }
-
-    chemicalContainer.innerHTML="";
-    e.chemicals.forEach(c=>addChemicalRow(c.name,c.amount,c.unit));
-}
-
-function deleteEntry(index){
-    if(confirm("Delete this entry?")){
-        poolData.splice(index,1);
-        saveStorage();
-        render();
-    }
-}
-
-function copyEntry(index){
-    const e=poolData[index];
-    const text=`
-Pool Test – ${e.date}
-
-pH: ${e.ph ?? "Not tested"}
-FC: ${e.fc ?? "Not tested"}
-TC: ${e.tc ?? "Not tested"}
-CC: ${e.cc ?? "Not tested"}
-TA: ${e.ta ?? "Not tested"}
-CH: ${e.ch ?? "Not tested"}
-CYA: ${e.cya ?? "Not tested"}
-Temp: ${e.temp ?? "Not tested"}
-
-Chemicals Added:
-${e.chemicals.map(c=>`- ${c.name} ${c.amount} ${c.unit}`).join("\n")}
-
-Notes:
-${e.notes}
-`;
-    navigator.clipboard.writeText(text);
-    alert("Copied to clipboard.");
-}
-
-/* -------- Chart -------- */
-
-const ctx=document.getElementById("chart").getContext("2d");
-
-let chart=new Chart(ctx,{
-    type:"line",
-    data:{labels:[],datasets:[]},
-    options:{
-        responsive:true,
-        spanGaps:false
-    }
-});
-
-function updateChart(data){
-    chart.data.labels=data.map(e=>e.date);
-
-    const datasets=[
-        {label:"pH",data:data.map(e=>e.ph),borderColor:"blue"},
-        {label:"FC",data:data.map(e=>e.fc),borderColor:"green"},
-        {label:"TC",data:data.map(e=>e.tc),borderColor:"orange"},
-        {label:"CC",data:data.map(e=>e.cc),borderColor:"red"},
-        {label:"TA",data:data.map(e=>e.ta),borderColor:"purple"},
-        {label:"CH",data:data.map(e=>e.ch),borderColor:"brown"},
-        {label:"CYA",data:data.map(e=>e.cya),borderColor:"black"}
-    ];
-
-    const selected=Array.from(document.querySelectorAll("#toggles input:not(#toggleAll):checked"))
-        .map(cb=>cb.value);
-
-    chart.data.datasets=datasets.filter(d=>selected.includes(d.label.toLowerCase()));
-    chart.update();
-}
-
-/* -------- Toggle Logic -------- */
-
-const toggleAll=document.getElementById("toggleAll");
-const otherToggles=document.querySelectorAll("#toggles input:not(#toggleAll)");
-
-toggleAll.addEventListener("change",()=>{
-    otherToggles.forEach(cb=>cb.checked=toggleAll.checked);
-    render();
-});
-
-otherToggles.forEach(cb=>{
-    cb.addEventListener("change",()=>{
-        toggleAll.checked=[...otherToggles].every(c=>c.checked);
-        render();
-    });
-});
-
-/* -------- CSV -------- */
-
-document.getElementById("exportBtn").addEventListener("click",()=>{
-    if(!poolData.length)return alert("No data");
-
-    const headers=["Date","pH","FC","TC","CC","TA","CH","CYA","Temp","Chemicals","Notes"];
-    const rows=poolData.map(e=>[
-        e.date,e.ph??"",e.fc??"",e.tc??"",e.cc??"",
-        e.ta??"",e.ch??"",e.cya??"",e.temp??"",
-        e.chemicals.map(c=>`${c.name} ${c.amount} ${c.unit}`).join(" | "),
-        e.notes
-    ]);
-
-    const csv=[headers,...rows].map(r=>r.join(",")).join("\n");
-    const blob=new Blob([csv],{type:"text/csv"});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement("a");
-    a.href=url;
-    a.download="pool-data.csv";
-    a.click();
-});
-
+renderChemicalDropdowns();
 render();
