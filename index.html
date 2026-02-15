@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -33,13 +32,13 @@
 
   <h4>Chemicals Added</h4>
   <div id="chemicalsContainer"></div>
-  <button type="button" onclick="addChemicalRow()">Add Chemical</button>
+  <button type="button" id="addChemicalBtn">Add Chemical</button>
 
   <button type="submit">Save Entry</button>
 </form>
 
 <h3>Chart Controls</h3>
-<div id="chartControls"></div>
+<div id="chartControls" class="controls"></div>
 
 <canvas id="chart"></canvas>
 
@@ -57,6 +56,8 @@
       <th>CH</th>
       <th>CYA</th>
       <th>Temp</th>
+      <th>Notes</th>
+      <th>Chemicals</th>
       <th>Actions</th>
     </tr>
   </thead>
