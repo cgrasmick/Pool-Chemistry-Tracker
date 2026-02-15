@@ -1,87 +1,70 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pool Tracker</title>
-<link rel="stylesheet" href="style.css">
-<!-- Chart.js CDN -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="UTF-8">
+    <title>Pool Chemistry Tracker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <div class="container">
-    <h1>Pool Chemistry Tracker</h1>
 
-    <!-- Form -->
-    <form id="entry-form">
-      <div class="row">
-        <label>Date: <input type="date" id="date" required></label>
-        <label>Notes: <input type="text" id="notes"></label>
-      </div>
-      <div class="row">
-        <label>pH: <input type="number" step="0.1" id="ph"></label>
-        <label>Free Chlorine (FC): <input type="number" step="0.1" id="fc"></label>
-        <label>Total Chlorine (TC): <input type="number" step="0.1" id="tc"></label>
-        <label>Combined Chlorine (CC): <input type="number" step="0.1" id="cc"></label>
-      </div>
-      <div class="row">
-        <label>Total Alkalinity (TA): <input type="number" step="1" id="ta"></label>
-        <label>Calcium Hardness (CH): <input type="number" step="1" id="ch"></label>
-        <label>Cyanuric Acid (CYA): <input type="number" step="1" id="cya"></label>
-        <label>Temperature (°F): <input type="number" step="1" id="temp"></label>
-      </div>
+<h2>Pool Chemistry Tracker</h2>
 
-      <!-- Chemicals Section -->
-      <div class="chemicals-section">
-        <h3>Add Chemicals</h3>
-        <label>Chemical:
-          <select id="chemical-select"></select>
-          <input type="text" id="new-chemical" placeholder="New chemical">
-          <button type="button" id="add-chemical">Add</button>
-        </label>
-        <label>Amount: <input type="number" id="chemical-amount" step="0.1"></label>
-        <label>Unit: <input type="text" id="chemical-unit" placeholder="oz, g, ml"></label>
-        <button type="submit">Save Entry</button>
-      </div>
-    </form>
+<form id="poolForm">
 
-    <!-- Checkbox toggles for chart -->
-    <div class="toggles">
-      <label><input type="checkbox" class="toggle-line" data-line="ph" checked> pH</label>
-      <label><input type="checkbox" class="toggle-line" data-line="fc" checked> FC</label>
-      <label><input type="checkbox" class="toggle-line" data-line="tc" checked> TC</label>
-      <label><input type="checkbox" class="toggle-line" data-line="cc" checked> CC</label>
-      <label><input type="checkbox" class="toggle-line" data-line="ta" checked> TA</label>
-      <label><input type="checkbox" class="toggle-line" data-line="ch" checked> CH</label>
-      <label><input type="checkbox" class="toggle-line" data-line="cya" checked> CYA</label>
-      <label><input type="checkbox" class="toggle-line" data-line="temp" checked> Temp</label>
-      <label><input type="checkbox" id="toggle-all" checked> All</label>
-    </div>
+    <input type="date" id="date" required>
+    <textarea id="notes" placeholder="Notes"></textarea>
 
-    <!-- Chart -->
-    <canvas id="pool-chart"></canvas>
+    <input type="number" step="0.01" id="ph" placeholder="pH">
+    <input type="number" step="0.01" id="fc" placeholder="Free Chlorine">
+    <input type="number" step="0.01" id="tc" placeholder="Total Chlorine">
+    <input type="number" step="0.01" id="cc" placeholder="Combined Chlorine">
+    <input type="number" step="0.01" id="ta" placeholder="Total Alkalinity">
+    <input type="number" step="0.01" id="ch" placeholder="Calcium Hardness">
+    <input type="number" step="0.01" id="cya" placeholder="Cyanuric Acid">
+    <input type="number" step="0.01" id="temp" placeholder="Temperature (F)">
 
-    <!-- Table of Entries -->
-    <h2>Past Entries</h2>
-    <table id="entries-table">
-      <thead>
+    <h3>Chemicals Added</h3>
+    <div id="chemicalContainer"></div>
+    <button type="button" id="addChemicalBtn">Add Chemical</button>
+
+    <button type="submit">Save Entry</button>
+</form>
+
+<h3>Chart Controls</h3>
+<div id="toggles">
+    <label><input type="checkbox" value="all" checked> All</label>
+    <label><input type="checkbox" value="ph" checked> pH</label>
+    <label><input type="checkbox" value="fc" checked> Free Chlorine</label>
+    <label><input type="checkbox" value="ta" checked> TA</label>
+    <label><input type="checkbox" value="ch" checked> CH</label>
+    <label><input type="checkbox" value="cya" checked> CYA</label>
+</div>
+
+<canvas id="chart"></canvas>
+
+<button id="exportBtn">Export to CSV</button>
+
+<h3>Entries</h3>
+<div class="table-wrapper">
+<table id="dataTable">
+    <thead>
         <tr>
-          <th>Date</th>
-          <th>Notes</th>
-          <th>pH</th>
-          <th>FC</th>
-          <th>TC</th>
-          <th>CC</th>
-          <th>TA</th>
-          <th>CH</th>
-          <th>CYA</th>
-          <th>Temp</th>
-          <th>Chemicals</th>
+            <th>Date</th>
+            <th>pH</th>
+            <th>FC</th>
+            <th>TA</th>
+            <th>CH</th>
+            <th>CYA</th>
+            <th>Temp</th>
+            <th>Chemicals</th>
+            <th>Notes</th>
         </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
+    </thead>
+    <tbody></tbody>
+</table>
+</div>
 
 <script src="script.js"></script>
 </body>
