@@ -1,43 +1,53 @@
 
 body {
   font-family: Arial, sans-serif;
-  max-width: 700px;
-  margin: auto;
-  padding: 15px;
+  max-width: 520px;
+  margin: 10px auto;
 }
 
-input, textarea, select, button {
+form label {
+  display: block;
+  margin-top: 8px;
+  font-size: 14px;
+}
+
+input, textarea, button {
   width: 100%;
-  margin: 5px 0;
-  padding: 8px;
-  font-size: 15px;
+  padding: 6px;
+  margin-top: 3px;
+  box-sizing: border-box;
+  font-size: 14px;
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: 1fr;
+textarea {
+  resize: vertical;
 }
 
-.controls {
+button {
+  margin-top: 8px;
+}
+
+#chartControls {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  font-size: 13px;
+  gap: 8px 14px;
   margin-bottom: 10px;
+  font-size: 13px;
 }
 
-.controls label {
+.chart-item {
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
+}
+
+.chart-item input {
+  width: auto;
+  margin: 0;
 }
 
 canvas {
-  margin-top: 10px;
-}
-
-.table-container {
-  overflow-x: auto;
+  max-height: 280px;
 }
 
 table {
@@ -50,26 +60,12 @@ th, td {
   border: 1px solid #ccc;
   padding: 4px;
   text-align: center;
-  vertical-align: middle;
+  vertical-align: top;
 }
 
-td.notes-cell {
-  max-width: 120px;
-  overflow-wrap: break-word;
-}
-
-td.chem-cell {
-  max-width: 150px;
-  overflow-wrap: break-word;
-}
-
-td.actions {
-  white-space: nowrap;
-}
-
-td.actions button {
+.actions button {
   width: auto;
-  font-size: 11px;
   padding: 3px 6px;
-  margin: 0 2px;
+  font-size: 11px;
+  margin: 2px;
 }
