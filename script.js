@@ -1,64 +1,151 @@
-let entries = JSON.parse(localStorage.getItem("entries")) || [];
-let chemicalTypes = JSON.parse(localStorage.getItem("chemicalTypes")) || [];
-let editingIndex = null;
-let chart;
 
-const metrics = ["fc","tc","cc","ph","ta","ch","cya","temp"];
+const fields = ["ph","fc","tc","cc","ta","ch","cya","temp"];
 
-function saveData() {
-  localStorage.setItem("entries", JSON.stringify(entries));
-  localStorage.setItem("chemicalTypes", JSON.stringify(chemicalTypes));
+let entries = JSON.parse(localStorage.getItem("poolEntries")) || [];
+let chemicalsList = JSON.parse(localStorage.getItem("chemList")) || [];
+
+let chart = null;
+let editIndex = null;
+
+/* ---------- STORAGE ---------- */
+
+function saveStorage() {
+  localStorage.setItem("poolEntries", JSON.stringify(entries));
+  localStorage.setItem("chemList", JSON.stringify(chemicalsList));
 }
 
-function parseVal(id) {
-  const val = document.getElementById(id).value;
-  return val === "" ? null : parseFloat(val);
+function getValue(id) {
+  const v = document.getElementById(id).value;
+  return v === "" ? null : parseFloat(v);
 }
 
-document.getElementById("entryForm").addEventListener("submit", function(e) {
+/* ---------- CHEMICALS ---------- */
+
+document.getElementById("addChemicalBtn").addEventListener("click", ()=>addChemicalRow());
+
+function addChemicalRow(name="", amount="", unit="oz") {
+  const container = document.getElementById("chemicalsContainer");
+
+  const row = document.createElement("div");
+  row.style.display = "flex";
+  row.style.gap = "5px";
+
+  const chemSelect = document.createElement("select");
+
+  const base = document.createElement("option");
+  base.value = "";
+  base.textContent = "Chemical";
+  chemSelect.appendChild(base);
+
+  chemicalsList.forEach(c=>{
+    const opt = document.createElement("option");
+    opt.value = c;
+    opt.textContent = c;
+    if(c===name) opt.selected=true;
+    chemSelect.appendChild(opt);
+  });
+
+  const addNew = document.createElement("option");
+  addNew.value="__new__";
+  addNew.textContent="+ Add New";
+  chemSelect.appendChild(addNew);
+
+  chemSelect.addEventListener("change", function(){
+    if(this.value==="__new__"){
+      const newChem = prompt("New chemical:");
+      if(newChem && !chemicalsList.includes(newChem)){
+        chemicalsList.push(newChem);
+        saveStorage();
+        renderChemicalDropdowns();
+      }
+    }
+  });
+
+  const amt = document.createElement("input");
+  amt.type="number";
+  amt.step="0.01";
+  amt.placeholder="Amt";
+  amt.value=amount;
+
+  const unitSelect=document.createElement("select");
+  ["oz","lb","gal","ml","g"].forEach(u=>{
+    const opt=document.createElement("option");
+    opt.value=u;
+    opt.textContent=u;
+    if(u===unit) opt.selected=true;
+    unitSelect.appendChild(opt);
+  });
+
+  row.appendChild(chemSelect);
+  row.appendChild(amt);
+  row.appendChild(unitSelect);
+
+  container.appendChild(row);
+}
+
+function renderChemicalDropdowns(){
+  document.getElementById("chemicalsContainer").innerHTML="";
+  addChemicalRow();
+}
+
+/* ---------- FORM SUBMIT ---------- */
+
+document.getElementById("entryForm").addEventListener("submit", function(e){
   e.preventDefault();
 
   const entry = {
-    date: document.getElementById("date").value,
-    fc: parseVal("fc"),
-    tc: parseVal("tc"),
-    cc: parseVal("cc"),
-    ph: parseVal("ph"),
-    ta: parseVal("ta"),
-    ch: parseVal("ch"),
-    cya: parseVal("cya"),
-    temp: parseVal("temp"),
-    notes: document.getElementById("notes").value,
-    chemicals: getChemicalRows()
+    date: date.value,
+    notes: notes.value,
+    chemicals:[]
   };
 
-  if (editingIndex !== null) {
-    entries[editingIndex] = entry;
-    editingIndex = null;
+  fields.forEach(f=>entry[f]=getValue(f));
+
+  document.querySelectorAll("#chemicalsContainer div").forEach(row=>{
+    const selects=row.querySelectorAll("select");
+    const inputs=row.querySelectorAll("input");
+
+    if(selects[0].value && inputs[0].value){
+      entry.chemicals.push({
+        name:selects[0].value,
+        amount:parseFloat(inputs[0].value),
+        unit:selects[1].value
+      });
+    }
+  });
+
+  if(editIndex!==null){
+    entries[editIndex]=entry;
+    editIndex=null;
   } else {
     entries.push(entry);
   }
 
-  entries.sort((a,b)=> new Date(b.date)-new Date(a.date));
+  entries.sort((a,b)=>new Date(b.date)-new Date(a.date));
 
-  saveData();
+  saveStorage();
+  render();
+
   this.reset();
-  renderTable();
-  renderChart();
+  renderChemicalDropdowns();
 });
 
-function renderTable() {
-  const tbody = document.querySelector("#entriesTable tbody");
-  tbody.innerHTML = "";
+/* ---------- TABLE ---------- */
+
+function renderTable(){
+  const tbody=document.querySelector("#entriesTable tbody");
+  tbody.innerHTML="";
 
   entries.forEach((e,i)=>{
-    const row = document.createElement("tr");
+    const tr=document.createElement("tr");
 
-    row.innerHTML = `
+    const chemText=e.chemicals.map(c=>`${c.name} ${c.amount}${c.unit}`).join(", ");
+
+    tr.innerHTML=`
       <td>${e.date}</td>
-      ${metrics.map(m=>`<td>${e[m] ?? ""}</td>`).join("")}
-      <td>${e.notes || ""}</td>
-      <td>${formatChemicals(e.chemicals)}</td>
+      ${fields.map(f=>`<td>${e[f] ?? ""}</td>`).join("")}
+      <td class="notes-cell">${e.notes}</td>
+      <td class="chem-cell">${chemText}</td>
       <td class="actions">
         <button onclick="editEntry(${i})">Edit</button>
         <button onclick="copyEntry(${i})">Copy</button>
@@ -66,188 +153,141 @@ function renderTable() {
       </td>
     `;
 
-    tbody.appendChild(row);
+    tbody.appendChild(tr);
   });
 }
 
-function renderChart() {
-  const ctx = document.getElementById("chemChart");
+function editEntry(i){
+  const e=entries[i];
+  editIndex=i;
 
-  const labels = [...entries].reverse().map(e=>e.date);
+  date.value=e.date;
+  notes.value=e.notes;
 
-  const datasets = metrics.map(m=>({
-    label: m.toUpperCase(),
-    data: [...entries].reverse().map(e=>e[m]),
-    borderWidth: 2,
-    spanGaps: false
+  fields.forEach(f=>{
+    document.getElementById(f).value=e[f] ?? "";
+  });
+
+  document.getElementById("chemicalsContainer").innerHTML="";
+  e.chemicals.forEach(c=>{
+    addChemicalRow(c.name,c.amount,c.unit);
+  });
+}
+
+function deleteEntry(i){
+  entries.splice(i,1);
+  saveStorage();
+  render();
+}
+
+function copyEntry(i){
+  const e=entries[i];
+  let text=`Pool Test ${e.date}\n\n`;
+  fields.forEach(f=>{
+    if(e[f]!==null) text+=`${f.toUpperCase()}: ${e[f]}\n`;
+  });
+
+  if(e.chemicals.length){
+    text+="\nChemicals Added:\n";
+    e.chemicals.forEach(c=>{
+      text+=`${c.name} - ${c.amount} ${c.unit}\n`;
+    });
+  }
+
+  text+=`\nNotes:\n${e.notes}`;
+
+  navigator.clipboard.writeText(text);
+  alert("Copied");
+}
+
+/* ---------- CHART ---------- */
+
+function renderChart(){
+  const ctx=document.getElementById("chart");
+
+  if(chart) chart.destroy();
+
+  const labels=entries.slice().reverse().map(e=>e.date);
+
+  const datasets=fields.map(f=>({
+    label:f.toUpperCase(),
+    data:entries.slice().reverse().map(e=>e[f]),
+    spanGaps:false
   }));
 
-  if (chart) chart.destroy();
-
-  chart = new Chart(ctx,{
+  chart=new Chart(ctx,{
     type:"line",
-    data:{ labels, datasets },
-    options:{
-      responsive:true,
-      interaction:{ mode:"index", intersect:false },
-      scales:{
-        y:{ beginAtZero:false }
-      },
-      plugins:{
-        tooltip:{
-          callbacks:{
-            label: function(context){
-              const index = context.dataIndex;
-              const entry = [...entries].reverse()[index];
-              return Object.entries(entry)
-                .filter(([k,v])=>metrics.includes(k) && v!==null)
-                .map(([k,v])=>`${k.toUpperCase()}: ${v}`)
-                .join(" | ");
-            }
-          }
-        }
-      }
-    }
+    data:{labels,datasets},
+    options:{responsive:true}
   });
 
   renderControls();
 }
 
-function renderControls() {
-  const div = document.getElementById("chartControls");
+function renderControls(){
+  const div=document.getElementById("chartControls");
   div.innerHTML="";
 
-  const allLabel = document.createElement("label");
-  allLabel.innerHTML = `<input type="checkbox" id="allToggle" checked> All`;
+  const allBox=document.createElement("input");
+  allBox.type="checkbox";
+  allBox.checked=true;
+
+  const allLabel=document.createElement("label");
+  allLabel.appendChild(allBox);
+  allLabel.append("All");
+
+  allBox.addEventListener("change",()=>{
+    chart.data.datasets.forEach(ds=>ds.hidden=!allBox.checked);
+    chart.update();
+    document.querySelectorAll(".datasetBox")
+      .forEach(cb=>cb.checked=allBox.checked);
+  });
+
   div.appendChild(allLabel);
 
-  metrics.forEach((m,i)=>{
-    const label = document.createElement("label");
-    label.innerHTML = `<input type="checkbox" data-index="${i}" checked> ${m.toUpperCase()}`;
+  chart.data.datasets.forEach((ds,i)=>{
+    const cb=document.createElement("input");
+    cb.type="checkbox";
+    cb.checked=true;
+    cb.className="datasetBox";
+
+    cb.addEventListener("change",()=>{
+      ds.hidden=!cb.checked;
+      chart.update();
+    });
+
+    const label=document.createElement("label");
+    label.appendChild(cb);
+    label.append(ds.label);
+
     div.appendChild(label);
   });
-
-  div.addEventListener("change", function(e){
-    if (e.target.id==="allToggle") {
-      const checked = e.target.checked;
-      div.querySelectorAll("input[type=checkbox]").forEach(cb=>{
-        cb.checked = checked;
-      });
-      chart.data.datasets.forEach(ds=> ds.hidden = !checked);
-      chart.update();
-      updateYAxis();
-      return;
-    }
-
-    if (e.target.dataset.index !== undefined) {
-      const i = e.target.dataset.index;
-      chart.data.datasets[i].hidden = !e.target.checked;
-      chart.update();
-      updateYAxis();
-    }
-  });
 }
 
-function updateYAxis() {
-  const visibleData = [];
+/* ---------- EXPORT ---------- */
 
-  chart.data.datasets.forEach(ds=>{
-    if (!ds.hidden) {
-      ds.data.forEach(v=>{
-        if (v!==null) visibleData.push(v);
-      });
-    }
-  });
+document.getElementById("exportBtn").addEventListener("click",()=>{
+  let csv="Date,"+fields.join(",")+",Notes,Chemicals\n";
 
-  if (visibleData.length===0) return;
-
-  const min = Math.min(...visibleData);
-  const max = Math.max(...visibleData);
-
-  chart.options.scales.y.min = min - (max-min)*0.1;
-  chart.options.scales.y.max = max + (max-min)*0.1;
-  chart.update();
-}
-
-function deleteEntry(i){
-  entries.splice(i,1);
-  saveData();
-  renderTable();
-  renderChart();
-}
-
-function editEntry(i){
-  const e = entries[i];
-  editingIndex = i;
-  Object.keys(e).forEach(k=>{
-    if (document.getElementById(k)) {
-      document.getElementById(k).value = e[k] ?? "";
-    }
-  });
-}
-
-function copyEntry(i){
-  const e = entries[i];
-  const text = `
-Date: ${e.date}
-FC: ${e.fc}
-TC: ${e.tc}
-CC: ${e.cc}
-pH: ${e.ph}
-TA: ${e.ta}
-CH: ${e.ch}
-CYA: ${e.cya}
-Temp: ${e.temp}
-Notes: ${e.notes}
-Chemicals: ${formatChemicals(e.chemicals)}
-  `;
-  navigator.clipboard.writeText(text.trim());
-}
-
-function addChemicalType(){
-  const name = document.getElementById("newChemical").value.trim();
-  if (!name) return;
-  chemicalTypes.push(name);
-  document.getElementById("newChemical").value="";
-  saveData();
-}
-
-function addChemicalRow(){
-  const div = document.createElement("div");
-  div.className="chem-row";
-  div.innerHTML=`
-    <select>${chemicalTypes.map(c=>`<option>${c}</option>`).join("")}</select>
-    <input type="number" step="0.01" placeholder="Amount">
-    <button type="button" onclick="this.parentElement.remove()">X</button>
-  `;
-  document.getElementById("chemicals").appendChild(div);
-}
-
-function getChemicalRows(){
-  return [...document.querySelectorAll("#chemicals .chem-row")].map(r=>({
-    name:r.querySelector("select").value,
-    amount:r.querySelector("input").value
-  }));
-}
-
-function formatChemicals(list){
-  if (!list || list.length===0) return "";
-  return list.map(c=>`${c.name} ${c.amount}`).join(", ");
-}
-
-function exportCSV(){
-  let csv="Date,"+metrics.join(",")+",Notes,Chemicals\n";
   entries.forEach(e=>{
-    csv+=`${e.date},${metrics.map(m=>e[m]??"").join(",")},${e.notes || ""},"${formatChemicals(e.chemicals)}"\n`;
+    const chemText=e.chemicals.map(c=>`${c.name} ${c.amount}${c.unit}`).join(" | ");
+    csv+=`${e.date},${fields.map(f=>e[f] ?? "").join(",")},"${e.notes}","${chemText}"\n`;
   });
 
-  const blob = new Blob([csv],{type:"text/csv"});
-  const url = URL.createObjectURL(blob);
+  const blob=new Blob([csv],{type:"text/csv"});
+  const url=URL.createObjectURL(blob);
   const a=document.createElement("a");
   a.href=url;
   a.download="pool_data.csv";
   a.click();
+});
+
+/* ---------- INIT ---------- */
+
+function render(){
+  renderTable();
+  renderChart();
 }
 
-renderTable();
-renderChart();
+renderChemicalDropdowns();
+render();
